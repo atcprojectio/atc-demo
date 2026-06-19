@@ -39,9 +39,7 @@ services:
       - demo-net
 
   atc:
-    build:
-      context: ../atc
-      dockerfile: ../atc-demo/Dockerfile.atc
+    image: ghcr.io/atcprojectio/atc:latest
     container_name: atc-demo-service
     command: server --config /etc/atc/atc-config.yaml
     ports:
@@ -58,9 +56,7 @@ services:
       - demo-net
 
   atc-backup:
-    build:
-      context: ../atc
-      dockerfile: ../atc-demo/Dockerfile.atc
+    image: ghcr.io/atcprojectio/atc:latest
     container_name: atc-demo-backup
     command: server --config /etc/atc/atc-config.yaml
     ports:

@@ -19,10 +19,10 @@ The demo environment spins up:
 
 ## Quick Start
 
-### 1. Build the Environment
-First, compile the ATC docker image (this builds both the embedded React frontend and the Go application inside a multi-stage Docker environment):
+### 1. Pull the Docker Images
+First, pull the latest released ATC and Consul docker images:
 ```bash
-make build
+make pull
 ```
 
 ### 2. Start the Stack
@@ -68,7 +68,8 @@ You can also view the Consul UI for each datacenter:
 
 | Command | Description |
 |---|---|
-| `make build` | Builds the custom ATC docker image |
+| `make pull` | Pulls the latest released ATC and Consul docker images |
+| `make build` | Alias for `make pull` |
 | `make up` | Starts the Docker containers in the background and federates datacenters |
 | `make down` | Stops the containers |
 | `make join-wan` | Manually establishes Consul WAN federation |

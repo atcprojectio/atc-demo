@@ -1,11 +1,12 @@
-.PHONY: build up down join-wan register deregister register-dc2 client purge status-atc status-consul run-demo clean help
+.PHONY: build pull up down join-wan register deregister register-dc2 client purge status-atc status-consul run-demo clean help
 
 # Default target
 all: help
 
 help:
 	@echo "ATC Demo Automation Tasks:"
-	@echo "  make build          - Build the ATC docker image (includes React build)"
+	@echo "  make pull           - Pull the latest released ATC and Consul docker images"
+	@echo "  make build          - Alias for make pull (no longer builds locally)"
 	@echo "  make up             - Spin up the federated Consul, mock services, and ATC in background"
 	@echo "  make down           - Stop all containers"
 	@echo "  make join-wan       - Ensure WAN federation is connected between dc1 and dc2"
@@ -21,8 +22,10 @@ help:
 	@echo "  make run-demo       - Run the complete interactive CLI demo script"
 	@echo "  make clean          - Stop containers and remove volumes"
 
-build:
-	docker compose build
+build: pull
+
+pull:
+	docker compose pull
 
 up:
 	docker compose up -d
