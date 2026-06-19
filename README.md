@@ -11,6 +11,10 @@ The demo environment spins up:
 4. **`atc`**: The primary Active Traffic Control service itself (port `8088`), running with HA enabled.
 5. **`atc-backup`**: A secondary/backup Active Traffic Control service (port `8090`), running with HA enabled and sharing session locks with the primary.
 
+> [!TIP]
+> **Production Deployments**:
+> While this demo is Docker Compose-based, production-ready configurations for Kubernetes (Helm) and Nomad are available in the main repository's [deploy](file:///Users/attachmentgenie/DevShed/Projects/atcprojectio/atc/deploy) directory.
+
 ---
 
 ## Quick Start
