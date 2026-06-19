@@ -1,0 +1,23 @@
+consul_addr: "http://consul-dc1:8500"
+consul_dc: "dc1"
+dampening_period: "5s"
+min_dampening_period: "0s"
+ha:
+  enabled: true
+  lock_key: "atc/leader/lock"
+  session_ttl: "15s"
+target:
+  - all
+server:
+  http_listen_port: 8088
+  metrics_listen_port: 8089
+  log_level: "debug"
+strategies:
+  failover:
+    standard-failover:
+      connect_timeout: "5s"
+      targets:
+        - datacenter: "dc2"
+  redirect:
+    standard-redirect:
+      datacenter: "dc2"
