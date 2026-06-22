@@ -5,11 +5,11 @@ This project provides a self-contained, Docker-based demo environment to showcas
 ## Architecture Overview
 
 The demo environment spins up:
-1. **`consul-dc1`**: The primary/local Consul agent representing datacenter `dc1`.
-2. **`consul-dc2`**: A secondary/remote Consul agent representing datacenter `dc2`.
+1. **`consul-dc1`**: The primary Consul agent representing datacenter `dc1`.
+2. **`consul-dc2`**: The secondary Consul agent representing datacenter `dc2`.
 3. **WAN Federation**: The two Consul datacenters are connected via WAN.
-4. **`atc`**: The primary Active Traffic Control service itself (port `8088`), running with HA enabled.
-5. **`atc-backup`**: A secondary/backup Active Traffic Control service (port `8090`), running with HA enabled and sharing session locks with the primary.
+4. **`atc`**: The Active Traffic Control daemon for `dc1` (port `8088`), configured to connect to `consul-dc1`.
+5. **`atc-backup`**: The Active Traffic Control daemon for `dc2` (port `8090`), configured to connect to `consul-dc2`.
 
 > [!TIP]
 > **Production Deployments**:
@@ -93,13 +93,11 @@ Run the automated test script to verify global default dampening, override tags,
 python3 test_hysteresis.py
 ```
 
-### 2. Active-Passive Failover
-1. Query leadership endpoints:
-   - Primary: `curl -s http://localhost:8088/api/leader`
-   - Backup: `curl -s http://localhost:8090/api/leader`
-2. One instance will report `{"leader":true}` and the other `{"leader":false}`.
-3. Stop the active container (e.g. `docker stop atc-demo-backup` if the backup is the active leader).
-4. Query the surviving container and verify it has taken over leadership (`{"leader":true}`).
+### 2. HA & Datacenter Isolation
+Since Consul does not replicate its KV store across the WAN federation, each ATC instance operates independently within its respective datacenter's control plane:
+- **Primary (`atc` at port `8088`)** connects to `consul-dc1` and acquires the session lock in `dc1` to become the active controller for `dc1` (`curl -s http://localhost:8088/api/leader` returns `{"leader":true}`).
+- **Backup (`atc-backup` at port `8090`)** connects to `consul-dc2` and acquires the session lock in `dc2` to become the active controller for `dc2` (`curl -s http://localhost:8090/api/leader` returns `{"leader":true}`).
+- If you were to run a second replica pointing to the same datacenter (e.g. `consul-dc1`), the two instances would compete for the lock in that KV store, establishing a local active-passive standby relationship.
 
 ### 3. WAN Federation Verification
 1. Query the WAN federation endpoint on either instance:

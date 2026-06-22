@@ -51,7 +51,7 @@ wait_for_config_entry() {
   done
   echo -e "\n${RED}Error: service-resolver entry for $service_name was not created within $timeout seconds.${RESET}"
   echo "ATC container logs:"
-  docker logs atc-demo-service || true
+  docker logs atc-dc1 || true
   exit 1
 }
 
@@ -72,7 +72,7 @@ wait_for_redirect_resolver() {
   done
   echo -e "\n${RED}Error: service-resolver did not switch to Redirect within $timeout seconds.${RESET}"
   echo "ATC container logs:"
-  docker logs atc-demo-service || true
+  docker logs atc-dc1 || true
   exit 1
 }
 
@@ -93,7 +93,7 @@ wait_for_failover_resolver() {
   done
   echo -e "\n${RED}Error: service-resolver did not switch to Failover within $timeout seconds.${RESET}"
   echo "ATC container logs:"
-  docker logs atc-demo-service || true
+  docker logs atc-dc1 || true
   exit 1
 }
 
