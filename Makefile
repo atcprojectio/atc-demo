@@ -6,7 +6,6 @@ all: help
 help:
 	@echo "ATC Demo Automation Tasks:"
 	@echo "  make pull           - Pull the latest released ATC and Consul docker images"
-	@echo "  make build          - Alias for make pull (no longer builds locally)"
 	@echo "  make up             - Spin up the federated Consul, mock services, and ATC in background"
 	@echo "  make down           - Stop all containers"
 	@echo "  make join-wan       - Ensure WAN federation is connected between dc1 and dc2"
@@ -21,8 +20,6 @@ help:
 	@echo "  make status-consul  - Query Consul DC1 for payment-service resolver config entry"
 	@echo "  make run-demo       - Run the complete interactive CLI demo script"
 	@echo "  make clean          - Stop containers and remove volumes"
-
-build: pull
 
 pull:
 	docker compose pull

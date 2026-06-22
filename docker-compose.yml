@@ -1,46 +1,10 @@
-version: '3.8'
+include:
+  - path: ./docker-compose.infrastructure.yml
 
 services:
-  consul-dc1:
-    image: hashicorp/consul:2.0.1
-    container_name: consul-dc1
-    command: agent -dev -datacenter=dc1 -node=consul-dc1 -client=0.0.0.0 -bind=0.0.0.0
-    ports:
-      - "8500:8500"
-      - "8600:8600/udp"
-    networks:
-      - demo-net
-
-  consul-dc2:
-    image: hashicorp/consul:2.0.1
-    container_name: consul-dc2
-    command: agent -dev -datacenter=dc2 -node=consul-dc2 -client=0.0.0.0 -bind=0.0.0.0
-    ports:
-      - "8501:8500"
-    networks:
-      - demo-net
-
-  payment-service-dc1:
-    image: hashicorp/http-echo:latest
-    container_name: payment-service-dc1
-    command: -text="[DC1 Instance] Payment processed successfully!" -listen=:8080
-    ports:
-      - "8080:8080"
-    networks:
-      - demo-net
-
-  payment-service-dc2:
-    image: hashicorp/http-echo:latest
-    container_name: payment-service-dc2
-    command: -text="[DC2 Instance] Payment processed successfully!" -listen=:8082
-    ports:
-      - "8082:8082"
-    networks:
-      - demo-net
-
-  atc:
+  atc-dc1:
     image: ghcr.io/atcprojectio/atc:latest
-    container_name: atc-demo-service
+    container_name: atc-dc1
     command: server --config /etc/atc/atc-config.yaml
     ports:
       - "8088:8088"
@@ -49,15 +13,16 @@ services:
       - ./atc-config.yaml:/etc/atc/atc-config.yaml
     environment:
       - OTEL_SDK_DISABLED=true
+      - ATC_CONSUL_ADDR=http://consul-dc1:8500
+      - ATC_CONSUL_DC=dc1
     depends_on:
       - consul-dc1
-      - consul-dc2
     networks:
       - demo-net
 
-  atc-backup:
+  atc-dc2:
     image: ghcr.io/atcprojectio/atc:latest
-    container_name: atc-demo-backup
+    container_name: atc-dc2
     command: server --config /etc/atc/atc-config.yaml
     ports:
       - "8090:8088"
@@ -66,8 +31,9 @@ services:
       - ./atc-config.yaml:/etc/atc/atc-config.yaml
     environment:
       - OTEL_SDK_DISABLED=true
+      - ATC_CONSUL_ADDR=http://consul-dc2:8501
+      - ATC_CONSUL_DC=dc2
     depends_on:
-      - consul-dc1
       - consul-dc2
     networks:
       - demo-net

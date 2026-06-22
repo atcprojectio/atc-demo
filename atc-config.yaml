@@ -3,11 +3,6 @@
 # Name of the ATC service instance
 service: "atc-service"
 
-# Consul connection settings
-consul_addr: "http://consul-dc1:8500"
-consul_dc: "dc1"
-consul_token: ""
-
 # Watcher reconciliation dampening/hysteresis periods
 dampening_period: "5s"
 min_dampening_period: "0s"
