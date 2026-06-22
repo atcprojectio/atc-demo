@@ -1,3 +1,5 @@
+name: atc-demo
+
 include:
   - path: ./docker-compose.infrastructure.yml
 
