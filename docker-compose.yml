@@ -14,7 +14,9 @@ services:
     volumes:
       - ./atc-config.yaml:/etc/atc/atc-config.yaml
     environment:
-      - OTEL_SDK_DISABLED=true
+      - OTEL_SDK_DISABLED=false
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
+      - OTEL_EXPORTER_OTLP_INSECURE=true
       - ATC_CONSUL_ADDR=http://consul-dc1:8500
       - ATC_CONSUL_DC=dc1
     depends_on:
@@ -32,7 +34,9 @@ services:
     volumes:
       - ./atc-config.yaml:/etc/atc/atc-config.yaml
     environment:
-      - OTEL_SDK_DISABLED=true
+      - OTEL_SDK_DISABLED=false
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
+      - OTEL_EXPORTER_OTLP_INSECURE=true
       - ATC_CONSUL_ADDR=http://consul-dc2:8501
       - ATC_CONSUL_DC=dc2
     depends_on:

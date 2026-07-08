@@ -1,4 +1,4 @@
-.PHONY: build pull up down join-wan register deregister register-dc2 client purge status-atc status-consul run-demo clean help
+.PHONY: build pull up down join-wan register deregister register-dc2 client client-laggy purge status-atc status-consul run-demo up-obs down-obs clean help
 
 # Default target
 all: help
@@ -8,18 +8,20 @@ help:
 	@echo "  make pull           - Pull the latest released ATC and Consul docker images"
 	@echo "  make up             - Spin up the federated Consul, mock services, and ATC in background"
 	@echo "  make down           - Stop all containers"
+	@echo "  make up-obs         - Start the LGTM observability stack (Grafana, Prometheus, Loki, Tempo)"
+	@echo "  make down-obs       - Stop the LGTM observability stack"
 	@echo "  make join-wan       - Ensure WAN federation is connected between dc1 and dc2"
 	@echo "  make register       - Register payment-service in dc1 (points to port 8080 mock container)"
 	@echo "  make deregister     - Deregister payment-service from dc1"
 	@echo "  make register-dc2   - Register payment-service in dc2 (points to port 8082 mock container)"
 	@echo "  make client         - Execute the traffic_client.py routing query and print outputs"
-	@echo "  make purge          - Delete/purge payment-service resolver entry from ATC"
+	@echo "  make client-laggy   - Run traffic_client.py with mock late entry from ATC"
 	@echo "  make override-failover - Apply manual failover override targeting dc2"
 	@echo "  make override-redirect - Apply manual redirect override targeting dc2"
 	@echo "  make status-atc     - Show services list from ATC server"
 	@echo "  make status-consul  - Query Consul DC1 for payment-service resolver config entry"
 	@echo "  make run-demo       - Run the complete interactive CLI demo script"
-	@echo "  make clean          - Stop containers and remove volumes"
+	@echo "  make clean          - Stop all containers and remove associated volumes"
 
 pull:
 	docker compose pull
@@ -32,6 +34,14 @@ up:
 
 down:
 	docker compose down
+	@docker compose -f ../atc/deploy/observability/docker-compose.observability.yml down --remove-orphans 2>/dev/null || true
+
+up-obs:
+	@docker network inspect atc-demo_demo-net >/dev/null 2>&1 || docker network create atc-demo_demo-net || true
+	docker compose -f ../atc/deploy/observability/docker-compose.observability.yml up -d
+
+down-obs:
+	docker compose -f ../atc/deploy/observability/docker-compose.observability.yml down
 
 join-wan:
 	docker exec consul-dc2 consul join -wan consul-dc1 || true
@@ -55,6 +65,9 @@ register-dc2:
 
 client:
 	@python3 traffic_client.py
+
+client-laggy:
+	@SIMULATE_DC1_LATENCY=true python3 traffic_client.py
 
 purge:
 	curl -s -X DELETE http://localhost:8088/api/services?name=payment-service
@@ -80,3 +93,4 @@ run-demo:
 
 clean:
 	docker compose down -v
+	docker compose -f ../atc/deploy/observability/docker-compose.observability.yml down -v --remove-orphans 2>/dev/null || true

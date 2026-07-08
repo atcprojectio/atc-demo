@@ -53,14 +53,13 @@ The `make run-demo` script runs through the following sequence:
 
 ---
 
-## Web UI Dashboard
+## Web UI & Observability Dashboards
 
-You can inspect the live state, tracked services, and failover status using ATC's glassmorphic React dashboard:
-- **ATC Web UI**: [http://localhost:8088](http://localhost:8088)
-
-You can also view the Consul UI for each datacenter:
+You can inspect the live state, tracked services, and failover status using the UI dashboards:
+- **ATC Web UI**: [http://localhost:8088](http://localhost:8088) (glassmorphic React dashboard)
 - **Consul DC1 UI**: [http://localhost:8500](http://localhost:8500)
 - **Consul DC2 UI**: [http://localhost:8501](http://localhost:8501)
+- **Grafana**: [http://localhost:3000](http://localhost:3000) (pre-configured dashboard visualizing reconciliation rates, loop execution times, Consul latency, and Loki override logs)
 
 ---
 
@@ -71,7 +70,9 @@ You can also view the Consul UI for each datacenter:
 | `make pull` | Pulls the latest released ATC and Consul docker images |
 | `make build` | Alias for `make pull` |
 | `make up` | Starts the Docker containers in the background and federates datacenters |
-| `make down` | Stops the containers |
+| `make down` | Stops the containers and the observability stack |
+| `make up-obs` | Starts the LGTM observability stack (Grafana, Prometheus, Loki, Tempo) |
+| `make down-obs` | Stops the LGTM observability stack |
 | `make join-wan` | Manually establishes Consul WAN federation |
 | `make register` | Registers a test instance of `payment-service` in `dc1` |
 | `make deregister` | Deregisters `payment-service` from `dc1` |
@@ -80,8 +81,43 @@ You can also view the Consul UI for each datacenter:
 | `make purge` | Permanently purges the `payment-service` resolver from ATC |
 | `make status-atc` | Outputs active modules and service tables from ATC CLI |
 | `make status-consul` | Queries Consul for the current state of the resolver config entry |
+| `make client` | Runs the traffic routing client |
+| `make client-laggy` | Runs the traffic client with 800ms mock latency on DC1 requests (simulates gray failure) |
 | `make run-demo` | Executes the interactive CLI walkthrough |
-| `make clean` | Shuts down containers and removes associated Docker volumes |
+| `make clean` | Shuts down containers, teardown observability stack, and removes all volumes |
+
+---
+
+## Testing Gray Failures (Latency Simulation)
+
+A gray failure happens when a service is technically healthy (its health check is green), but suffers from degraded performance (e.g., high latency). In this state, automatic health checks do not trigger failover, forcing slow requests onto clients.
+
+1. **Start the Stack and Observability**:
+   ```bash
+   make up
+   make up-obs
+   ```
+2. **Register the Service**:
+   ```bash
+   make register
+   ```
+3. **Simulate a Gray Failure**:
+   Run the traffic client with mock latency:
+   ```bash
+   make client-laggy
+   ```
+   Open Grafana at `http://localhost:3000` to observe the spike in Consul API request latency on the dashboard.
+4. **Remediate (Manual Override)**:
+   Bypass the automated health check by applying a manual redirect to `dc2`:
+   - **Via UI**: Go to [http://localhost:8088](http://localhost:8088), open the override modal, and set a redirect to `dc2` for `15m`.
+   - **Via MCP**: Instruct your AI client: *"Apply manual redirect override for payment-service to dc2 for 15m"*
+5. **Verify Re-routing**:
+   Run `make client` (without lag). Note that requests are immediately routed to `dc2` without touching the slow `dc1` instance.
+6. **Recover**:
+   Purge the override to return to normal automated state monitoring:
+   ```bash
+   make purge
+   ```
 
 ---
 

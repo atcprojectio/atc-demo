@@ -2,6 +2,8 @@
 import urllib.request
 import json
 import sys
+import os
+import time
 
 def get_service_resolver():
     try:
@@ -23,7 +25,10 @@ def get_healthy_instances(dc):
 def make_request(port):
     url = f"http://localhost:{port}"
     try:
-        req = urllib.request.urlopen(url, timeout=1)
+        if port == 8080 and os.environ.get("SIMULATE_DC1_LATENCY") == "true":
+            print("\033[31;1m[Traffic Router] Mocking latency spike (800ms lag)... \033[0m")
+            time.sleep(0.8)
+        req = urllib.request.urlopen(url, timeout=3.0)
         return req.read().decode('utf-8').strip()
     except Exception as e:
         return f"Error connecting to mock service on port {port}: {e}"
