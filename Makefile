@@ -129,7 +129,7 @@ status-leader-backup:
 	@curl -i http://localhost:8094/api/leader
 
 status-leader-static:
-	@curl -i -H "Authorization: Bearer atc-super-secret-token" http://localhost:8088/api/leader
+	@curl -i -H "Authorization: Bearer atc-demo-static-key" http://localhost:8088/api/leader
 
 status-leader-consul:
 	@curl -i -H "X-Consul-Token: atc-consul-master-token" http://localhost:8088/api/leader
