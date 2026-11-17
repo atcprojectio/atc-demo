@@ -50,10 +50,10 @@ down-infra:
 	docker compose rm -fsv consul-dc1 consul-dc2 payment-service-dc1 payment-service-dc2
 
 up-atc:
-	docker compose up -d atc-dc1 atc-dc2
+	docker compose up -d atc-dc1 atc-dc2 atc-dc1-backup
 
 down-atc:
-	docker compose rm -fsv atc-dc1 atc-dc2
+	docker compose rm -fsv atc-dc1 atc-dc2 atc-dc1-backup
 
 down:
 	docker compose down
