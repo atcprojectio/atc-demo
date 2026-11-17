@@ -33,8 +33,11 @@ ha:
 auth:
   enabled: false
   static_keys:
-    - "atc-super-secret-token"
+    - "atc-demo-static-key"
   consul_token_delegation: true
+  # Demo only: the containers listen on all interfaces with auth disabled, which ATC
+  # refuses by default. Never set this in production; enable auth instead.
+  allow_unauthenticated: true
 
 # Web server and metrics configuration
 server:

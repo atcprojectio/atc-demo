@@ -39,8 +39,9 @@ This scenario demonstrates how to secure ATC's REST and MCP endpoints and authen
    auth:
      enabled: false
      static_keys:
-       - "atc-super-secret-token"
+       - "atc-demo-static-key"
      consul_token_delegation: true
+     allow_unauthenticated: true
    ```
 3. Change `enabled` from `false` to `true`:
    ```yaml
@@ -48,9 +49,11 @@ This scenario demonstrates how to secure ATC's REST and MCP endpoints and authen
    auth:
      enabled: true
      static_keys:
-       - "atc-super-secret-token"
+       - "atc-demo-static-key"
      consul_token_delegation: true
+     allow_unauthenticated: true
    ```
+   (`allow_unauthenticated` only matters while auth is disabled; ATC refuses to start without auth on a non-loopback address unless it is set.)
 4. Save the file. (Wait a few seconds for the hot-reload watcher to apply the new configurations, or restart the container `docker compose restart atc-dc1`).
 
 ## 3. Verify Unauthorized Request
