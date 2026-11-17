@@ -4,6 +4,9 @@ import json
 import time
 import sys
 
+# Longest dampening used by these tests (global dampening_period and atc.dampening tags).
+MAX_DAMPENING_SECONDS = 5
+
 # Terminal colors
 BOLD = "\033[1m"
 RED = "\033[31;1m"
@@ -38,6 +41,9 @@ def clean_up():
     log("Cleaning up service registrations and resolver configuration...", YELLOW)
     api_request("http://localhost:8500/v1/agent/service/deregister/payment-service-dc1-1", method="PUT")
     api_request("http://localhost:8501/v1/agent/service/deregister/payment-service-dc2-1", method="PUT")
+    # Let any write ATC queued for the old registration fire first (the longest dampening used
+    # here is 5s); purging earlier would let that write recreate the resolver afterwards.
+    time.sleep(MAX_DAMPENING_SECONDS + 1)
     api_request("http://localhost:8088/api/services?name=payment-service", method="DELETE")
     time.sleep(2)
     # Ensure payment-service is registered in dc2 as backup

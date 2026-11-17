@@ -205,17 +205,29 @@ echo -e "${BOLD}Simulating a client HTTP request after recovery:${RESET}"
 python3 traffic_client.py
 echo ""
 
-print_step "9" "Purge/Cleanup Configuration"
-echo "If the service is permanently retired, we can purge the config entry from ATC."
-echo "Calling ATC Purge API (DELETE /api/services?name=payment-service)..."
+print_step "9" "Retire the Service and Purge its Configuration"
+echo "Purging the resolver of a service that is still registered with atc.enabled=true only"
+echo "resumes automatic routing: ATC recreates its resolver right away."
+echo "To retire payment-service for good, deregister it first..."
+curl -s --request PUT http://localhost:8500/v1/agent/service/deregister/payment-service-dc1-1 >/dev/null
+curl -s --request PUT http://localhost:8501/v1/agent/service/deregister/payment-service-dc2-1 >/dev/null
+echo -e "${GREEN}✓ payment-service deregistered in dc1 and dc2.${RESET}"
+echo "ATC sees it disappear and redirects it after the dampening period."
+wait_for_redirect_resolver "payment-service"
+
 echo ""
-
+echo "Now purge the leftover redirect via the ATC API (DELETE /api/services?name=payment-service)..."
 curl -s -X DELETE http://localhost:8088/api/services?name=payment-service
-
 echo -e "${GREEN}✓ Purge request sent.${RESET}"
-echo "Verifying service-resolver entry in Consul is deleted..."
-sleep 2
-curl -s http://localhost:8500/v1/config/service-resolver/payment-service || echo -e "\n${GREEN}✓ Service-resolver entry successfully deleted from Consul!${RESET}"
+
+echo "Verifying the service-resolver stays deleted (waiting past the 5s dampening period)..."
+sleep 7
+if curl -sf http://localhost:8500/v1/config/service-resolver/payment-service >/dev/null; then
+  echo -e "${RED}Error: the service-resolver for payment-service still exists.${RESET}"
+  curl -s http://localhost:8500/v1/config/service-resolver/payment-service | format_json '.'
+  exit 1
+fi
+echo -e "${GREEN}✓ Service-resolver entry successfully deleted from Consul!${RESET}"
 
 echo -e "\n${BLUE}========================================================================${RESET}"
 echo -e "${BOLD}${GREEN}                     Demo Completed Successfully!                      ${RESET}"
