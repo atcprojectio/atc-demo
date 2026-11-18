@@ -116,6 +116,10 @@ docker exec consul-dc2 consul join -wan consul-dc1 || true
 echo -e "${GREEN}✓ Datacenters federated successfully!${RESET}"
 echo ""
 
+echo "Cleaning up registrations left over from a previous run..."
+curl -s --request PUT http://localhost:8500/v1/agent/service/deregister/payment-service-dc1-1 >/dev/null || true
+curl -s --request PUT http://localhost:8501/v1/agent/service/deregister/payment-service-dc2-1 >/dev/null || true
+
 echo "Registering payment-service backend instance in DC2 (always active backup)..."
 curl -s --request PUT \
   --data '{"ID": "payment-service-dc2-1", "Name": "payment-service", "Address": "payment-service-dc2", "Port": 8082}' \
@@ -123,9 +127,7 @@ curl -s --request PUT \
 echo -e "${GREEN}✓ payment-service registered in dc2.${RESET}"
 
 print_step "2" "Show and Cleanup Initial State"
-echo "Cleaning up any old service registrations..."
-curl -s --request PUT http://localhost:8500/v1/agent/service/deregister/payment-service-dc1-1 >/dev/null || true
-curl -s --request PUT http://localhost:8501/v1/agent/service/deregister/payment-service-dc2-1 >/dev/null || true
+# The dc2 backup registered in step 1 must stay: it is the redirect/failover target.
 echo "Cleaning up any old service-resolver configurations..."
 curl -s -X DELETE http://localhost:8088/api/services?name=payment-service >/dev/null || true
 

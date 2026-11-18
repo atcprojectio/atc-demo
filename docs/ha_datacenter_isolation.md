@@ -11,10 +11,39 @@ make up
 
 ## 2. HA & Datacenter Isolation
 
-Since Consul does not replicate its KV store across the WAN federation, each ATC instance operates independently within its respective datacenter's control plane:
-- **Primary (`atc` at port `8088`)** connects to `consul-dc1` and acquires the session lock in `dc1` to become the active controller for `dc1` (`make status-leader` returns `{"leader":true}`).
-- **Backup (`atc-backup` at port `8090`)** connects to `consul-dc2` and acquires the session lock in `dc2` to become the active controller for `dc2` (querying the `dc2` leader status returns `{"leader":true}`).
-- If you were to run a second replica pointing to the same datacenter (e.g. `consul-dc1`), the two instances would compete for the lock in that KV store, establishing a local active-passive standby relationship.
+Consul does not replicate its KV store across the WAN federation, so leader election is per datacenter. The demo runs three ATC containers:
+
+| Container | Ports (API / metrics / MCP) | Consul | Role |
+|---|---|---|---|
+| `atc-dc1` | `8088` / `8089` / `8092` | `consul-dc1` | Competes for the dc1 leader locks |
+| `atc-dc1-backup` | `8094` / `8095` / `8096` | `consul-dc1` | HA standby for dc1: competes for the same locks |
+| `atc-dc2` | `8090` / `8091` / `8093` | `consul-dc2` | Controller for dc2, independent of dc1 |
+
+- **Datacenter isolation:** `atc-dc1` and `atc-dc2` each hold the locks in their own datacenter, so both are leaders at the same time without conflict.
+- **Active-passive HA in dc1:** `atc-dc1` and `atc-dc1-backup` compete for the dc1 locks (one per module: `atc/leader/lock/forwarder` and `atc/leader/lock/redirector`). One holds them; the other waits as standby.
+
+Check who leads in dc1:
+```bash
+make status-leader          # atc-dc1
+make status-leader-backup   # atc-dc1-backup
+```
+Exactly one of the two reports `"leader": true` for each module.
+
+### Fail over to the standby
+1. Stop the current dc1 leader (usually `atc-dc1`):
+   ```bash
+   make stop-primary
+   ```
+2. Within about one session TTL (15 seconds), the standby takes over:
+   ```bash
+   make status-leader-backup
+   make logs-backup | grep "Leadership acquired"
+   ```
+3. Bring the primary back; it rejoins as standby:
+   ```bash
+   make start-primary
+   make status-leader
+   ```
 
 ## 3. WAN Federation Verification
 

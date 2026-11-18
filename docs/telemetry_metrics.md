@@ -24,7 +24,7 @@ This scenario demonstrates how to query raw Prometheus metric counters and navig
 1. Open your web browser and navigate to the Prometheus Web Console:
    [http://localhost:9090](http://localhost:9090)
 2. In the query expression field, type `atc_forwarder_reconcile_runs_total` and click **Execute**.
-3. You will see the total number of watcher reconciliation runs executed by `atc-dc1` and `atc-dc2`.
+3. You will see the total number of reconciliation runs executed by `atc-dc1`, `atc-dc1-backup` and `atc-dc2` (one series per `instance`; the standby only counts while it leads).
 4. Trigger a service state transition (e.g. reload or deregister):
    ```bash
    make deregister
@@ -36,12 +36,14 @@ This scenario demonstrates how to query raw Prometheus metric counters and navig
 1. Open your web browser and navigate to Grafana:
    [http://localhost:3000](http://localhost:3000)
    *(Note: Grafana is pre-configured with anonymous access, so no login credentials are required)*
-2. In the Grafana menu, go to **Dashboards** and select the pre-configured **Active Traffic Control (ATC) Dashboard**.
-4. The dashboard displays:
-   - **Active Traffic Path**: A real-time topology layout showing whether traffic for `payment-service` is routed to DC1 (primary) or redirected/failed-over to DC2 (standby).
-   - **Reconciliation Loop Latency**: Histograms capturing the exact execution time of ATC's forwarder and redirector sweeps.
-   - **Structured Logs Panel**: Captures logs parsed dynamically from container stdin streams via Loki, showing routing overrides and coordinator leader promotions in real-time.
-   - **Distributed Traces Panel**: Links directly to Tempo to trace distributed requests across Consul and backend endpoints.
+2. In the Grafana menu, go to **Dashboards** and open **ATC Traffic Control & Observability**.
+3. The dashboard has five panels:
+   - **ATC Active Reconciliation Rate (runs/sec)**: forwarder and redirector reconciliation runs per second, one line per ATC instance.
+   - **Reconciliation Duration (p95 milliseconds)**: 95th-percentile duration of forwarder and redirector reconciliation runs.
+   - **Consul Service Instance Health Status**: Consul's view of `payment-service` instances.
+   - **Consul API Request Latency (p90 ms)**: latency of Consul's HTTP API.
+   - **ATC System Reconciler & Override Audit Logs**: ATC's logs from Loki (`{service_name="atc"}`), including reconciliation, leadership and audit entries.
+4. Traces are not on the dashboard: open **Explore**, pick the **Tempo** data source and search for service `atc` to follow reconciliation and API spans.
 5. Re-register the service (`make register`) and watch the panels refresh to reflect the active primary path!
 
 ## 4. Teardown

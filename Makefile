@@ -1,4 +1,4 @@
-.PHONY: build pull up down join-wan register deregister register-dc2 client client-laggy purge status-atc status-consul run-demo up-obs down-obs up-infra down-infra up-atc down-atc clean help test-hysteresis status-federation logs-atc logs-backup stop-primary start-primary status-leader status-leader-backup status-leader-static status-leader-consul status-leader-invalid status-metrics override-failover override-redirect
+.PHONY: test-unit build pull up down join-wan register deregister register-dc2 client client-laggy purge status-atc status-consul run-demo up-obs down-obs up-infra down-infra up-atc down-atc clean help test-hysteresis status-federation logs-atc logs-backup stop-primary start-primary status-leader status-leader-backup status-leader-static status-leader-consul status-leader-invalid status-metrics override-failover override-redirect
 
 # Default target
 all: help
@@ -139,6 +139,9 @@ status-leader-invalid:
 
 status-metrics:
 	@curl -s http://localhost:8089/metrics | grep "atc_"
+
+test-unit: ## Static and unit checks for the demo (no containers needed)
+	python3 -m unittest discover -s tests -v
 
 test-hysteresis:
 	@python3 test_hysteresis.py
