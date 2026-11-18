@@ -128,7 +128,7 @@
         "y": 8
       },
       "id": 3,
-      "title": "Consul Service Instance Health Status",
+      "title": "Consul Registered Service Instances",
       "type": "timeseries",
       "datasource": {
         "type": "prometheus",
@@ -141,8 +141,8 @@
             "uid": "Prometheus"
           },
           "editorMode": "code",
-          "expr": "consul_catalog_service{service=\"payment-service\"}",
-          "legendFormat": "Catalog Instance Count (payment-service)",
+          "expr": "max by (instance) (consul_state_service_instances)",
+          "legendFormat": "{{instance}}",
           "range": true,
           "refId": "A"
         }
@@ -165,7 +165,7 @@
         "y": 8
       },
       "id": 4,
-      "title": "Consul API Request Latency (p90 ms)",
+      "title": "Consul API Write Latency (p90 ms)",
       "type": "timeseries",
       "datasource": {
         "type": "prometheus",
@@ -178,8 +178,8 @@
             "uid": "Prometheus"
           },
           "editorMode": "code",
-          "expr": "histogram_quantile(0.90, sum(rate(consul_api_http_bucket[1m])) by (le)) * 1000",
-          "legendFormat": "Consul HTTP p90",
+          "expr": "max by (instance) (consul_api_http{quantile=\"0.9\", method=~\"PUT|DELETE\"})",
+          "legendFormat": "{{instance}} p90",
           "range": true,
           "refId": "A"
         }
