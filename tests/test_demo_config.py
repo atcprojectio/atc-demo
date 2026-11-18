@@ -27,6 +27,18 @@ class DemoScriptTest(unittest.TestCase):
                              "payment-service-dc2-1 is deregistered after it was registered")
 
 
+class ComposeTest(unittest.TestCase):
+    def test_atc_uses_consul_container_port(self):
+        """Inside the Docker network every Consul agent listens on 8500; ports like 8501 are
+        only host mappings. atc-dc2 used consul-dc2:8501 and could never reach Consul."""
+        compose = read("docker-compose.yml")
+        addrs = re.findall(r"ATC_CONSUL_ADDR=http://([\w-]+):(\d+)", compose)
+        self.assertEqual(3, len(addrs))
+        for host, port in addrs:
+            self.assertTrue(host.startswith("consul-"), host)
+            self.assertEqual("8500", port, f"{host}:{port} is a host port, not reachable inside the network")
+
+
 class PrometheusTest(unittest.TestCase):
     def test_every_atc_container_is_scraped(self):
         containers = re.findall(r"container_name:\s*(atc-[\w-]+)", read("docker-compose.yml"))
@@ -56,6 +68,32 @@ class DashboardTest(unittest.TestCase):
             for expr in self.exprs(pid):
                 if "atc_" in expr:
                     self.assertNotIn("service_name", expr, f"panel {pid}")
+
+    def test_consul_panels_use_metrics_consul_exports(self):
+        """Checked against a running demo: consul_api_http is a summary (no _bucket series) and
+        consul_catalog_service does not exist."""
+        exprs = " ".join(e for pid in self.panels for e in self.exprs(pid))
+        self.assertNotIn("consul_api_http_bucket", exprs)
+        self.assertNotIn("consul_catalog_service{", exprs)
+        self.assertIn('consul_api_http{quantile="0.9", method=~"PUT|DELETE"}', exprs)
+        self.assertIn("consul_state_service_instances", exprs)
+
+    def test_consul_latency_panel_excludes_blocking_reads(self):
+        """Blocking GETs (watches, the leader lock) are held open for minutes by design; a p90 that
+        includes them showed ~15s on an idle demo. Only writes measure real API latency."""
+        for pid in self.panels:
+            for expr in self.exprs(pid):
+                if "consul_api_http" in expr:
+                    self.assertIn('method=~"PUT|DELETE"', expr, f"panel {pid}")
+
+    def test_consul_metric_names_do_not_include_the_hostname(self):
+        """Without disable_hostname, Consul prefixes gauges with the container ID
+        (consul_<id>_state_service_instances), which changes on every recreate."""
+        infra = read("docker-compose.infrastructure.yml")
+        agents = re.findall(r"command: agent .*", infra)
+        self.assertEqual(2, len(agents))
+        for cmd in agents:
+            self.assertIn("disable_hostname = true", cmd)
 
     def test_logs_panel_matches_atc_service_name(self):
         """ATC exports logs with service.name="atc" (telemetry.Init in the atc repo) unless

@@ -40,8 +40,8 @@ This scenario demonstrates how to query raw Prometheus metric counters and navig
 3. The dashboard has five panels:
    - **ATC Active Reconciliation Rate (runs/sec)**: forwarder and redirector reconciliation runs per second, one line per ATC instance.
    - **Reconciliation Duration (p95 milliseconds)**: 95th-percentile duration of forwarder and redirector reconciliation runs.
-   - **Consul Service Instance Health Status**: Consul's view of `payment-service` instances.
-   - **Consul API Request Latency (p90 ms)**: latency of Consul's HTTP API.
+   - **Consul Registered Service Instances**: service instances registered in each datacenter's Consul.
+   - **Consul API Write Latency (p90 ms)**: 90th-percentile latency of writes (PUT/DELETE) to each Consul agent's HTTP API, such as ATC's resolver writes and session renewals. Reads are left out because blocking queries (watches, the leader lock) hold the request open by design, which would make reads look slow.
    - **ATC System Reconciler & Override Audit Logs**: ATC's logs from Loki (`{service_name="atc"}`), including reconciliation, leadership and audit entries.
 4. Traces are not on the dashboard: open **Explore**, pick the **Tempo** data source and search for service `atc` to follow reconciliation and API spans.
 5. Re-register the service (`make register`) and watch the panels refresh to reflect the active primary path!
