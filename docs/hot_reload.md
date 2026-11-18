@@ -14,8 +14,19 @@ This scenario demonstrates ATC's ability to watch its configuration file (`atc-c
    ```bash
    make register
    ```
-3. **Verify Initial Redirect Target**:
-   Check the Consul configuration entry to confirm the default redirect target is `dc2`:
+3. **Verify the Failover Resolver**:
+   While the service is registered and healthy, ATC writes a *failover* resolver:
+   ```bash
+   make status-consul
+   ```
+   You should see a `Failover` block pointing at `dc2`. There is no `Redirect` yet: ATC only redirects once the service is gone from dc1.
+4. **Simulate Outage**:
+   Simulate an outage by removing the local service instance:
+   ```bash
+   make deregister
+   ```
+5. **Verify Redirect Routing**:
+   Verify the Consul configuration entry now shows the redirect to `dc2` (after the dampening period of a few seconds):
    ```bash
    make status-consul
    ```
@@ -24,16 +35,6 @@ This scenario demonstrates ATC's ability to watch its configuration file (`atc-c
    "Redirect": {
      "Datacenter": "dc2"
    }
-   ```
-4. **Simulate Outage**:
-   Simulate an outage by removing the local service instance:
-   ```bash
-   make deregister
-   ```
-5. **Verify Redirect Routing**:
-   Verify the Consul configuration entry shows the redirect is active:
-   ```bash
-   make status-consul
    ```
 6. **Restore Service**:
    Restore the service instance back online:
@@ -57,6 +58,11 @@ This scenario demonstrates ATC's ability to watch its configuration file (`atc-c
          datacenter: "dc3"
    ```
 4. Save the file.
+
+   > **Note:** `atc-config.yaml` is mounted into the containers as a single file. Editors that save by writing a new file and renaming it (many do) replace the file on the host, which a single-file Docker bind mount may not show inside the container, so the file watcher never fires. If no reload appears in the logs, trigger it explicitly:
+   > ```bash
+   > curl -X POST http://localhost:8088/api/reload
+   > ```
 5. Inspect the container logs of `atc-dc1` to verify the hot-reload was triggered:
    ```bash
    make logs-atc | grep "Configuration reloaded"

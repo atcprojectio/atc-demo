@@ -41,6 +41,9 @@ def route_request():
         target_dc = resolver["Redirect"].get("Datacenter", "dc1")
         target_svc = resolver["Redirect"].get("Service", "payment-service")
         print(f"\033[34;1m[Traffic Router]\033[0m Redirect Rule Active -> Target DC: {target_dc}, Service: {target_svc}")
+        # Like a real data plane, a redirect only works if the target has healthy instances.
+        if not get_healthy_instances(target_dc):
+            return f"Error: redirect target {target_svc} in {target_dc} has no healthy instances"
         if target_dc == "dc2":
             return make_request(8082)
         else:

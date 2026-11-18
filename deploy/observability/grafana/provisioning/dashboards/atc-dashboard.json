@@ -43,8 +43,8 @@
             "uid": "Prometheus"
           },
           "editorMode": "code",
-          "expr": "sum(rate(atc_forwarder_reconcile_runs_total[30s])) by (service_name, job)",
-          "legendFormat": "Forwarder: {{service_name}}",
+          "expr": "sum(rate(atc_forwarder_reconcile_runs_total[30s])) by (instance)",
+          "legendFormat": "Forwarder: {{instance}}",
           "range": true,
           "refId": "A"
         },
@@ -54,8 +54,8 @@
             "uid": "Prometheus"
           },
           "editorMode": "code",
-          "expr": "sum(rate(atc_redirector_reconcile_runs_total[30s])) by (service_name, job)",
-          "legendFormat": "Redirector: {{service_name}}",
+          "expr": "sum(rate(atc_redirector_reconcile_runs_total[30s])) by (instance)",
+          "legendFormat": "Redirector: {{instance}}",
           "range": true,
           "refId": "B"
         }
@@ -214,7 +214,7 @@
             "type": "loki",
             "uid": "Loki"
           },
-          "expr": "{service_name=\"atc-service\"} |= \"\" | json",
+          "expr": "{service_name=\"atc\"}",
           "refId": "A"
         }
       ],
